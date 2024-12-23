@@ -32,21 +32,35 @@ async function run() {
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
 
-    const allCarsCollection = client.db("assignment11").collection("allcars");
+    const allCarsCollection = client.db("assignment11").collection("all-cars");
+    const allBookingCollection = client
+      .db("assignment11")
+      .collection("all-bookings");
     app.get("/", async (req, res) => {
       res.send("assignment 11 is running");
     });
-    app.post("/allcars", async (req, res) => {
+    app.post("/all-cars", async (req, res) => {
       const newCar = req.body;
       const result = await allCarsCollection.insertOne(newCar);
       res.send(result);
     });
-    app.get("/allcars", async (req, res) => {
+    app.post("/all-bookings", async (req, res) => {
+      const newCar = req.body;
+      const result = await allBookingCollection.insertOne(newCar);
+      res.send(result);
+    });
+    app.get("/all-cars", async (req, res) => {
       const query = {};
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/allcars/:id", async (req, res) => {
+    app.get("/all-bookings/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await allBookingCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/all-cars/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await allCarsCollection.find(query).toArray();
