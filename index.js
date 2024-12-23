@@ -41,6 +41,11 @@ async function run() {
       const result = await allCarsCollection.insertOne(newCar);
       res.send(result);
     });
+    app.get("/allcars", async (req, res) => {
+      const query = {};
+      const result = await allCarsCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
