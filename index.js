@@ -68,12 +68,40 @@ async function run() {
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
-    app.delete("/deleteBooked/:id", async (req, res) => {
+    app.patch("/updateStatus/:id", async (req, res) => {
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
-      const result = await allBookingCollection.deleteOne(query);
+      const result = await allBookingCollection.updateOne(query, {
+        $set: {
+          BookingStatus: "cancel",
+        },
+      });
       res.send(result);
+    });
+    app.patch("/updateBooking/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedBooking = req.body;
+
+      const booking = {
+        $set: {
+          dateAdded: updatedBooking.dateAdded,
+        },
+      };
+
+      try {
+        const result = await allBookingCollection.updateOne(
+          filter,
+          booking,
+          options
+        );
+        res.send(result);
+      } catch (err) {
+        console.error("Error updating booking:", err);
+        res.status(500).send("Error updating booking");
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
