@@ -56,6 +56,17 @@ async function run() {
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
+    app.patch("/all-cars/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateBookingCount = req.body;
+      const query = { _id: new ObjectId(id) };
+      const result = await allCarsCollection.updateOne(query, {
+        $set: {
+          bookingCount: updateBookingCount.bookingCount,
+        },
+      });
+      res.send(result);
+    });
     app.get("/all-bookings/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -66,6 +77,34 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await allCarsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/my-cars/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { addedBy: email };
+      const result = await allCarsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.delete("/my-cars/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const result = await allCarsCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.patch("/my-cars/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateCarData = req.body;
+
+      const query = { _id: new ObjectId(id) };
+      const result = await allCarsCollection.updateOne(query, {
+        $set: {
+          carModel: updateCarData.carModel,
+          dailyRentalPrice: updateCarData.dailyRentalPrice,
+          availability: updateCarData.availability,
+          description: updateCarData.description,
+        },
+      });
       res.send(result);
     });
     app.patch("/updateStatus/:id", async (req, res) => {
@@ -87,7 +126,8 @@ async function run() {
 
       const booking = {
         $set: {
-          dateAdded: updatedBooking.dateAdded,
+          startDate: updatedBooking.startDate,
+          endDate: updatedBooking.endDate,
         },
       };
 
