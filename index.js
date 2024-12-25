@@ -2,14 +2,37 @@ const express = require("express");
 // const multer = require("multer");
 // const path = require("path");
 const app = express();
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
+app.use(cookieParser());
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  // console.log(" token inside the verify token", token);
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  // verify the token
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 // const upload = multer({ dest: "uploads/" });
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0sbt0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -37,6 +60,27 @@ async function run() {
     const allBookingCollection = client
       .db("assignment11")
       .collection("all-bookings");
+    // auth related apis
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "5h",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+    app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
     app.get("/", async (req, res) => {
       res.send("assignment 11 is running");
     });
@@ -53,6 +97,7 @@ async function run() {
     });
     app.get("/all-cars", async (req, res) => {
       const query = {};
+
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
@@ -70,21 +115,34 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/all-bookings/:email", async (req, res) => {
+    app.get("/all-bookings/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
+
       const query = { email };
+      if (req.user.email !== req.params.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       const result = await allBookingCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/all-cars/:id", async (req, res) => {
+    app.get("/all-cars/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
+
       const query = { _id: new ObjectId(id) };
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/my-cars/:email", async (req, res) => {
+
+    app.get("/my-cars/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { addedBy: email };
+
+      // console.log(req.cookies.token);
+      // console.log(req.user.email);
+      // console.log(req.params.email);
+      if (req.user.email !== req.params.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
