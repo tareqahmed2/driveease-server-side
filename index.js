@@ -58,15 +58,18 @@ async function run() {
     });
     app.patch("/all-cars/:id", async (req, res) => {
       const id = req.params.id;
-      const updateBookingCount = req.body;
       const query = { _id: new ObjectId(id) };
-      const result = await allCarsCollection.updateOne(query, {
-        $set: {
-          bookingCount: updateBookingCount.bookingCount,
-        },
-      });
+
+      const { bookingStatus } = req.body;
+      const update = {
+        $inc: { bookingCount: 1 },
+        $set: { bookingStatus },
+      };
+
+      const result = await allCarsCollection.updateOne(query, update);
       res.send(result);
     });
+
     app.get("/all-bookings/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -109,15 +112,29 @@ async function run() {
     });
     app.patch("/updateStatus/:id", async (req, res) => {
       const id = req.params.id;
-
+      console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await allBookingCollection.updateOne(query, {
         $set: {
-          BookingStatus: "cancel",
+          bookingStatus: "Cancelled",
         },
       });
+
       res.send(result);
     });
+    app.patch("/updateAvailableBookingCount/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const update = {
+        $inc: { bookingCount: -1 },
+        $set: { bookingStatus: "Cancelled" },
+      };
+
+      const result = await allCarsCollection.updateOne(query, update);
+      res.send(result);
+    });
+
     app.patch("/updateBooking/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
