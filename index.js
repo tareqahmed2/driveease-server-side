@@ -108,6 +108,8 @@ async function run() {
     });
     app.patch("/all-cars/:id", async (req, res) => {
       const id = req.params.id;
+      const query2 = { CarId: id };
+
       const query = { _id: new ObjectId(id) };
 
       const { bookingStatus } = req.body;
@@ -115,18 +117,25 @@ async function run() {
         $inc: { bookingCount: 1 },
         $set: { bookingStatus },
       };
+      const update2 = {
+        $inc: { bookingCount: 1 },
+        $set: { bookingStatus },
+      };
 
       const result = await allCarsCollection.updateOne(query, update);
+      const result2 = await allBookingCollection.updateOne(query2, update2);
       res.send(result);
     });
 
-    app.get("/all-bookings/:email", verifyToken, async (req, res) => {
+    app.get("/all-bookings/:email", async (req, res) => {
       const email = req.params.email;
 
       const query = { email };
-      if (req.user.email !== req.params.email) {
-        return res.status(403).send({ message: "forbidden access" });
-      }
+      // console.log(req.user.email);
+      // console.log(req.params.email);
+      // if (req.user.email !== req.params.email) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
       const result = await allBookingCollection.find(query).toArray();
       res.send(result);
     });
@@ -145,9 +154,9 @@ async function run() {
       // console.log(req.cookies.token);
       // console.log(req.user.email);
       // console.log(req.params.email);
-      if (req.user.email !== req.params.email) {
-        return res.status(403).send({ message: "forbidden access" });
-      }
+      // if (req.user.email !== req.params.email) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
       const result = await allCarsCollection.find(query).toArray();
       res.send(result);
     });
@@ -169,10 +178,16 @@ async function run() {
           dailyRentalPrice: updateCarData.dailyRentalPrice,
           availability: updateCarData.availability,
           description: updateCarData.description,
+          vehicleRegistrationNumber: updateCarData.vehicleRegistrationNumber,
+
+          imageURL: updateCarData.images,
+          features: updateCarData.features,
+          location: updateCarData.location,
         },
       });
       res.send(result);
     });
+
     app.patch("/updateStatus/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -187,14 +202,21 @@ async function run() {
     });
     app.patch("/updateAvailableBookingCount/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
 
+      const query = { _id: new ObjectId(id) };
+      const query2 = { CarId: id };
       const update = {
+        $inc: { bookingCount: -1 },
+        $set: { bookingStatus: "Cancelled" },
+      };
+      const update2 = {
         $inc: { bookingCount: -1 },
         $set: { bookingStatus: "Cancelled" },
       };
 
       const result = await allCarsCollection.updateOne(query, update);
+      const result2 = await allBookingCollection.updateOne(query2, update2);
+
       res.send(result);
     });
 
